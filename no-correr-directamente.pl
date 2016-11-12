@@ -4,13 +4,17 @@ use 5.022_002;
 use strict;
 use warnings;
 use utf8;
-use English qw(-no_match_vars);
 use Carp;
+use English qw(-no_match_vars);
+
 use Log::Log4perl qw(:easy);
 use Log::Log4perl::Level;
 use File::Basename;
+use Cwd 'abs_path';
 
-my $LOG_FILE = 'log.log';
+my $NOMBRE = 'script';
+my ($NOMBRE_REAL, $RUTA) = fileparse(abs_path($PROGRAM_NAME));
+my $LOG_FILE = $RUTA.'log.log';
 my $PAUSA    = 5;
 my $log;
 my $no_me_canso = 1;
@@ -23,7 +27,6 @@ my $no_me_canso = 1;
 sub iniciar_log {
     my $opt   = shift;
     my $nivel = defined $opt ? 'DEBUG' : 'INFO';
-    my $app   = basename($0);
 
     my $conf_logger
         = "log4perl.rootLogger = $nivel, Stdout\n"
@@ -35,39 +38,59 @@ sub iniciar_log {
         $conf_logger
             .= "log4perl.appender.Stdout = Log::Dispatch::Syslog\n"
             . "log4perl.appender.Stdout.min_level = debug\n"
-            . "log4perl.appender.Stdout.ident = $app\n"
+            . "log4perl.appender.Stdout.ident = $NOMBRE\n"
             . "log4perl.appender.Stdout.logopt = cons,pid,ndelay\n"
             . "log4perl.appender.Stdout.layout.ConversionPattern = %p %m%n";
     }
-    else {
+    elsif($OSNAME eq 'MSWin32') {
         $conf_logger
             .= "log4perl.appender.Stdout = Log::Log4perl::Appender::File\n"
             . "log4perl.appender.Stdout.filename = $LOG_FILE\n"
             . "log4perl.appender.Stdout.utf8 = 1\n"
             . "log4perl.appender.Stdout.min_level = DEBUG\n"
-            . "log4perl.appender.Stdout.layout.ConversionPattern = %d{MMM dd HH:mm:ss} %H $app\[%P\]: %p %m%n";
+            . "log4perl.appender.Stdout.layout.ConversionPattern = %d{MMM dd HH:mm:ss} %H $NOMBRE\[%P\]: %p %m%n";
     }
 
     Log::Log4perl->init( \$conf_logger );
 
-    return Log::Log4perl->get_logger($app);
+    return Log::Log4perl->get_logger($NOMBRE);
 }
 
 sub trabajar {
     $log->info('Hago como que estoy trabajando...');
+	
+	# Detección de si el servicio (Windows) ha dejado de estar corriendo.
+	if($OSNAME eq 'MSWin32' and not comprobar_corriendo()){
+		$no_me_canso = 0;
+	}
+	if(not $no_me_canso){
+		$log->info('Me han pedido que pare (o estoy KO)');
+	}
+	
     sleep $PAUSA;
 }
 
 # Configución del demonio/servicio
 sub configurar {
+	$log->info("Configurando para $OSNAME");
+	
     if ( $OSNAME eq 'linux' ) {
         while ($no_me_canso) {
             trabajar();
         }
         $log->info('Demonio detenido.');
+		exit 0;
     }
-    else {
-
+    elsif($OSNAME eq 'MSWin32') {
+	    require $RUTA.'servicio.pl';
+		preparar_servicio({
+			log => $log,
+			pausa => $PAUSA,
+			daemon => \&trabajar,
+			nomecanso => \$no_me_canso,
+		});
+		$log->info('Servicio detenido.');
+		exit 0;
     }
 }
 
