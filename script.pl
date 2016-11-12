@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use 5.016_003;
+use 5.022_002;
 use strict;
 use warnings;
 use utf8;
