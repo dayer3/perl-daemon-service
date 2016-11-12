@@ -9,7 +9,6 @@ use Carp;
 use Log::Log4perl qw(:easy);
 use Log::Log4perl::Level;
 use File::Basename;
-use Proc::Daemon;
 
 my $LOG_FILE = 'log.log';
 my $PAUSA    = 5;
