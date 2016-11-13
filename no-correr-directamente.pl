@@ -13,8 +13,8 @@ use File::Basename;
 use Cwd 'abs_path';
 
 my $NOMBRE = 'script';
-my ($NOMBRE_REAL, $RUTA) = fileparse(abs_path($PROGRAM_NAME));
-my $LOG_FILE = $RUTA.'log.log';
+my ( $NOMBRE_REAL, $RUTA ) = fileparse( abs_path($PROGRAM_NAME) );
+my $LOG_FILE = $RUTA . 'log.log';
 my $PAUSA    = 5;
 my $log;
 my $no_me_canso = 1;
@@ -25,7 +25,7 @@ my $no_me_canso = 1;
 
 # Configuración e inicialización del log.
 sub iniciar_log {
-    my $opt   = shift;
+    my $opt = shift;
     my $nivel = defined $opt ? 'DEBUG' : 'INFO';
 
     my $conf_logger
@@ -42,7 +42,7 @@ sub iniciar_log {
             . "log4perl.appender.Stdout.logopt = cons,pid,ndelay\n"
             . "log4perl.appender.Stdout.layout.ConversionPattern = %p %m%n";
     }
-    elsif($OSNAME eq 'MSWin32') {
+    elsif ( $OSNAME eq 'MSWin32' ) {
         $conf_logger
             .= "log4perl.appender.Stdout = Log::Log4perl::Appender::File\n"
             . "log4perl.appender.Stdout.filename = $LOG_FILE\n"
@@ -58,39 +58,40 @@ sub iniciar_log {
 
 sub trabajar {
     $log->info('Hago como que estoy trabajando...');
-	
-	# Detección de si el servicio (Windows) ha dejado de estar corriendo.
-	if($OSNAME eq 'MSWin32' and not comprobar_corriendo()){
-		$no_me_canso = 0;
-	}
-	if(not $no_me_canso){
-		$log->info('Me han pedido que pare (o estoy KO)');
-	}
-	
+
+    # Detección de si el servicio (Windows) ha dejado de estar corriendo.
+    if ( $OSNAME eq 'MSWin32' and not comprobar_corriendo() ) {
+        $no_me_canso = 0;
+    }
+    if ( not $no_me_canso ) {
+        $log->info('Me han pedido que pare (o estoy KO)');
+    }
+
     sleep $PAUSA;
 }
 
 # Configución del demonio/servicio
 sub configurar {
-	$log->info("Configurando para $OSNAME");
-	
+    $log->info("Configurando para $OSNAME");
+
     if ( $OSNAME eq 'linux' ) {
         while ($no_me_canso) {
             trabajar();
         }
         $log->info('Demonio detenido.');
-		exit 0;
+        exit 0;
     }
-    elsif($OSNAME eq 'MSWin32') {
-	    require $RUTA.'servicio.pl';
-		preparar_servicio({
-			log => $log,
-			pausa => $PAUSA,
-			daemon => \&trabajar,
-			nomecanso => \$no_me_canso,
-		});
-		$log->info('Servicio detenido.');
-		exit 0;
+    elsif ( $OSNAME eq 'MSWin32' ) {
+        require $RUTA . 'servicio.pl';
+        preparar_servicio(
+            {   log       => $log,
+                pausa     => $PAUSA,
+                daemon    => \&trabajar,
+                nomecanso => \$no_me_canso,
+            }
+        );
+        $log->info('Servicio detenido.');
+        exit 0;
     }
 }
 
