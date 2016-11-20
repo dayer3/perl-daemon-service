@@ -11,7 +11,7 @@ use Win32::Daemon;
 use Cwd 'abs_path';
 use File::Basename;
 
-my $NOMBRE      = 'script';
+my $NOMBRE      = 'experimento';
 my $NOMBRE_REAL = 'no-correr-directamente.pl';
 
 my ( $log, $PAUSA, $daemon, $no_me_canso );
@@ -94,16 +94,16 @@ sub Callback_Stop {
 
 sub instalar {
 
-    # Para configurar el servicio necesitamos las rutas absolutas.
+    # Para configurar el servicio necesitamos la ruta absoluta.
     my ( $nombre, $ruta ) = fileparse( abs_path($PROGRAM_NAME) );
 
     my $service_info = {
-        machine     => '',
+        machine     => q{},
         name        => $NOMBRE,
         display     => $NOMBRE,
         path        => $EXECUTABLE_NAME,
-        user        => '',
-        pwd         => '',
+        user        => q{},
+        pwd         => q{},
         start_type  => SERVICE_AUTO_START,
         description => 'Servicio de prueba',
         parameters  => $ruta . $NOMBRE_REAL,
@@ -120,7 +120,7 @@ sub instalar {
 }
 
 sub desinstalar {
-    if ( Win32::Daemon::DeleteService( '', $NOMBRE ) ) {
+    if ( Win32::Daemon::DeleteService( q{}, $NOMBRE ) ) {
         say 'Servicio desinstalado correctamente';
     }
     else {

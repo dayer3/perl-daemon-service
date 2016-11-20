@@ -12,7 +12,10 @@ use Log::Log4perl::Level;
 use File::Basename;
 use Cwd 'abs_path';
 
-my $NOMBRE = 'script';
+# HUP, INT, PIPE, TERM
+use sigtrap 'handler' => \&manejador, 'normal-signals';
+
+my $NOMBRE = 'experimento';
 my ( $NOMBRE_REAL, $RUTA ) = fileparse( abs_path($PROGRAM_NAME) );
 my $LOG_FILE = $RUTA . 'log.log';
 my $PAUSA    = 5;
@@ -63,8 +66,9 @@ sub trabajar {
     if ( $OSNAME eq 'MSWin32' and not comprobar_corriendo() ) {
         $no_me_canso = 0;
     }
-    if ( not $no_me_canso ) {
+    if ( $no_me_canso == 0 ) {
         $log->info('Me han pedido que pare (o estoy KO)');
+        return;
     }
 
     sleep $PAUSA;
@@ -95,6 +99,14 @@ sub configurar {
     }
 }
 
+# Manejador de señales
+sub manejador {
+    my $s = shift;
+
+    $log->info("Recibida señal '$s'. Voy cerrando...'");
+    $no_me_canso = 0;
+}
+
 ################################################################################
 #################################### PRINCIPAL #################################
 ################################################################################
@@ -104,6 +116,7 @@ $log = iniciar_log();
 $log->info("Arrancando en $OSNAME");
 
 # Redirección de los warnings a Log4perl, para que no se nos escapen.
+# http://log4perl.sourceforge.net/releases/Log-Log4perl/docs/html/Log/Log4perl/FAQ.html#73200
 $SIG{__WARN__} = sub {
     local $Log::Log4perl::caller_depth = $Log::Log4perl::caller_depth + 1;
     WARN @_;
