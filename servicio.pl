@@ -29,15 +29,17 @@ sub preparar_servicio {
     $no_me_canso = $argumentos->{no_me_canso};
 
     # No queremos pausar ni continuar.
-    my $accepted_controls = Win32::Daemon::AcceptedControls();
-    $accepted_controls &= ~SERVICE_ACCEPT_PAUSE_CONTINUE;
-    Win32::Daemon::AcceptedControls($accepted_controls);
+    #my $accepted_controls = Win32::Daemon::AcceptedControls();
+    #$accepted_controls &= ~SERVICE_ACCEPT_PAUSE_CONTINUE;
+    #Win32::Daemon::AcceptedControls($accepted_controls);
 
     # Registramos los callbacks.
     Win32::Daemon::RegisterCallbacks(
         {   start   => \&Callback_Start,
             running => \&Callback_Running,
             stop    => \&Callback_Stop,
+			pause => \&Callback_Pause,
+			continue => \&Callback_Continue,
         }
     );
 
@@ -90,6 +92,24 @@ sub Callback_Stop {
     # Le notificamos que nos paramos.
     Win32::Daemon::StopService();
     return SERVICE_STOPPED;
+}
+
+sub Callback_Pause {
+    my ( $Event, $Context ) = @_;
+
+    $log->info('Pausando...');
+
+    # Le notificamos que nos pausamos.
+    return SERVICE_PAUSED;
+}
+
+sub Callback_Continue {
+    my ( $Event, $Context ) = @_;
+
+    $log->info('Continuando...');
+
+    # Le notificamos que continuamos.
+    return SERVICE_RUNNING;
 }
 
 sub instalar {
