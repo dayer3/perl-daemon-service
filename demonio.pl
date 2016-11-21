@@ -25,7 +25,7 @@ Description=experimento
 
 [Service]
 Type=simple
-ExecStart=$ruta$NOMBRE_REAL
+ExecStart=$EXECUTABLE_NAME $ruta$NOMBRE_REAL
 
 [Install]
 WantedBy=multi-user.target
