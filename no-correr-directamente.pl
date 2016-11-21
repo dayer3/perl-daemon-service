@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 use 5.022_002;
 use strict;
 use warnings;
@@ -14,6 +12,15 @@ use Cwd 'abs_path';
 
 # HUP, INT, PIPE, TERM
 use sigtrap 'handler' => \&manejador, 'normal-signals';
+
+BEGIN{
+	if ( $OSNAME eq 'MSWin32' ) {
+		my ( $NOMBRE_REAL, $RUTA ) = fileparse( abs_path($PROGRAM_NAME) );
+		push @INC, $RUTA;
+    }
+}
+
+use if $OSNAME eq 'MSWin32', Servicio => qw(preparar_servicio comprobar_corriendo);
 
 my $NOMBRE = 'experimento';
 my ( $NOMBRE_REAL, $RUTA ) = fileparse( abs_path($PROGRAM_NAME) );
@@ -86,7 +93,6 @@ sub configurar {
         exit 0;
     }
     elsif ( $OSNAME eq 'MSWin32' ) {
-        require $RUTA . 'servicio.pl';
         preparar_servicio(
             {   log       => $log,
                 pausa     => $PAUSA,
